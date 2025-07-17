@@ -1,18 +1,39 @@
 import streamlit as st
 import pandas as pd
+import base64
 
-from background import set_background
-set_background("assets/bg_air.jpg")
-
+# ========== Konfigurasi Halaman ==========
 st.set_page_config(page_title="Kualitas Pencemaran Air", layout="centered")
-st.title("💧 Aplikasi Kualitas Pencemaran Air")
 
+# ========== Fungsi untuk Menampilkan Background Gambar ==========
+def set_background(image_path):
+    with open(image_path, "rb") as img_file:
+        encoded = base64.b64encode(img_file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpg;base64,{encoded}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# Panggil fungsi dengan gambar yang sudah kamu upload
+set_background("Gambar latar belakang web.jpg")
+
+# ========== Judul Aplikasi ==========
+st.title("💧 Aplikasi Kualitas Pencemaran Air")
 st.markdown("""
 Masukkan parameter kualitas air berikut.  
 Tidak semua parameter harus diisi — aplikasi akan menghitung berdasarkan data yang tersedia.
 """)
 
-# Baku mutu berdasarkan PP No. 22 Tahun 2021 (Kelas II)
+# ========== Baku Mutu ==========
 baku_mutu = {
     "pH_min": 6.0,
     "pH_max": 9.0,
@@ -25,6 +46,7 @@ baku_mutu = {
     "E.coli": 1000
 }
 
+# ========== Form Input ==========
 with st.form("input_form"):
     ph = st.number_input("pH", min_value=0.0, step=0.1, format="%.2f")
     suhu = st.number_input("Suhu Saat Ini (°C)", min_value=0.0, step=0.1)
@@ -38,6 +60,7 @@ with st.form("input_form"):
 
     submitted = st.form_submit_button("Hitung Kualitas Air")
 
+# ========== Logika Perhitungan ==========
 if submitted:
     hasil = []
 
@@ -49,7 +72,7 @@ if submitted:
         else:
             return round(nilai / baku, 2)
 
-    # Hitung IP untuk setiap parameter yang diisi
+    # Per parameter
     if ph > 0:
         if ph < baku_mutu["pH_min"]:
             ip_ph = round(baku_mutu["pH_min"] / ph, 2)
@@ -82,6 +105,7 @@ if submitted:
     ip_ecoli = hitung_ip(ecoli, baku_mutu["E.coli"])
     if ip_ecoli is not None: hasil.append(("E.coli", ip_ecoli))
 
+    # ========== Tampilkan Hasil ==========
     if hasil:
         df = pd.DataFrame(hasil, columns=["Parameter", "Indeks Pencemar"])
         ip_max = df["Indeks Pencemar"].max()
@@ -92,7 +116,7 @@ if submitted:
         st.write(f"**IP Maksimum:** {ip_max}")
         st.write(f"**IP Rata-rata:** {round(ip_mean, 2)}")
 
-        # Klasifikasi mutu air
+        # Kategori mutu air
         if ip_max <= 1:
             kategori = "BAIK (Air memenuhi baku mutu)"
         elif ip_max <= 5:
