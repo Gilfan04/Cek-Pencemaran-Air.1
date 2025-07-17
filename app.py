@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+#Terapkan background
+set_background("assets/bg.jpg")
+
 st.set_page_config(page_title="Kualitas Pencemaran Air", layout="centered")
 st.title("💧 Aplikasi Kualitas Pencemaran Air")
 
